@@ -1,0 +1,48 @@
+═══════════════════════════════════════════════════════════
+  AI RESUME-JOB MATCHER - INSTALLATION INSTRUCTIONS
+═══════════════════════════════════════════════════════════
+
+📦 ONE-CLICK INSTALLATION:
+
+1. Open Terminal/Command Prompt in this folder
+
+2. Run setup (ONE TIME ONLY):
+   
+   chmod +x setup.sh start.sh stop.sh
+   ./setup.sh
+
+3. Start the application:
+   
+   ./start.sh
+
+4. Open your browser:
+   
+   http://localhost:5173
+
+5. Upload a PDF resume and get matches!
+
+═══════════════════════════════════════════════════════════
+
+🔧 PREREQUISITES (Install these first if not installed):
+
+- Docker Desktop: https://www.docker.com/products/docker-desktop
+- Python 3.11: https://www.python.org/downloads/
+- Node.js 18+: https://nodejs.org/
+
+═══════════════════════════════════════════════════════════
+
+🛑 STOPPING THE APPLICATION:
+
+   ./stop.sh
+
+═══════════════════════════════════════════════════════════
+
+📚 MORE HELP:
+
+- Quick Start: See QUICKSTART.md
+- Full Documentation: See README.md
+- API Documentation: http://localhost:8000/docs (after starting)
+
+═══════════════════════════════════════════════════════════
+
+✨ Built for B.Tech IT Mini-Project
