@@ -7,7 +7,7 @@ __pycache__/
 venv/
 env/
 ENV/
-.venv
+.venv/
 *.egg-info/
 dist/
 build/
@@ -50,3 +50,9 @@ frontend.log
 *.db
 *.sqlite
 *.sqlite3
+postgres_data/
+
+# AI Models
+models/
+*.bin
+*.pkl

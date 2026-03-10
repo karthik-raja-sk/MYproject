@@ -1,89 +1,88 @@
-/**
- * API client for backend communication.
- * Centralized error handling and request configuration.
- */
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
-
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 30000, // 30 seconds
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
 });
 
-// Request interceptor for logging
+// Add a request interceptor to include the JWT token in all requests
 api.interceptors.request.use(
   (config) => {
-    console.log(`[API Request] ${config.method.toUpperCase()} ${config.url}`);
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
-    console.error('[API Request Error]', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => {
-    console.log(`[API Response] ${response.config.url} - Status: ${response.status}`);
-    return response;
+export const authService = {
+  login: async (email, password) => {
+    const response = await api.post('/api/auth/login', { email, password });
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+    }
+    return response.data;
   },
-  (error) => {
-    console.error('[API Error]', error.response?.data || error.message);
-    return Promise.reject(error);
+  register: async (userData) => {
+    const response = await api.post('/api/auth/register', userData);
+    return response.data;
+  },
+  logout: () => {
+    localStorage.removeItem('token');
+  },
+  getCurrentUser: async () => {
+    // Current user can be fetched from a /me endpoint if we add it, 
+    // for now we'll just check if token exists and assume valid if not expired
+    return localStorage.getItem('token') ? { email: 'user@example.com' } : null;
   }
-);
-
-/**
- * Upload resume PDF file
- */
-export const uploadResume = async (file) => {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const response = await api.post('/resumes/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-  return response.data;
 };
 
-/**
- * Create a new job posting
- */
-export const createJob = async (jobData) => {
-  const response = await api.post('/jobs', jobData);
-  return response.data;
+export const resumeService = {
+  upload: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/api/resumes/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+  list: async () => {
+    const response = await api.get('/api/resumes/list');
+    return response.data;
+  },
 };
 
-/**
- * Get all jobs
- */
-export const getJobs = async () => {
-  const response = await api.get('/jobs');
-  return response.data;
+export const jobService = {
+  create: async (jobData) => {
+    const response = await api.post('/api/jobs/create', jobData);
+    return response.data;
+  },
+  list: async () => {
+    const response = await api.get('/api/jobs/list');
+    return response.data;
+  },
+  delete: async (id) => {
+    const response = await api.delete(`/api/jobs/${id}`);
+    return response.data;
+  },
 };
 
-/**
- * Generate matches for a resume
- */
-export const generateMatches = async (resumeId) => {
-  const response = await api.post(`/matches/${resumeId}`);
-  return response.data;
-};
-
-/**
- * Get existing matches for a resume
- */
-export const getMatches = async (resumeId) => {
-  const response = await api.get(`/resumes/${resumeId}/matches`);
-  return response.data;
+export const matchService = {
+  run: async (resumeId) => {
+    const response = await api.post(`/api/matches/run/${resumeId}`);
+    return response.data;
+  },
+  getHistory: async () => {
+    const response = await api.get('/api/matches/history');
+    return response.data;
+  },
+  getStats: async () => {
+    const response = await api.get('/api/matches/stats');
+    return response.data;
+  },
 };
 
 export default api;

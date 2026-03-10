@@ -1,84 +1,93 @@
-"""
-Pydantic schemas for request/response validation.
-Separates API contracts from database models (clean architecture).
-"""
-from pydantic import BaseModel, Field, validator
-from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field
+from typing import List, Optional, Any
 from datetime import datetime
 
+# Auth Schemas
+class UserBase(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
 
-class ResumeUploadResponse(BaseModel):
-    """Response after successful resume upload."""
+class UserCreate(UserBase):
+    password: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(UserBase):
     id: int
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    email: Optional[str] = None
+
+# Resume Schemas
+class ResumeBase(BaseModel):
     filename: str
+
+class ResumeUploadResponse(ResumeBase):
+    id: int
     file_size: int
     processing_status: str
     message: str
-    
+
+class ResumeResponse(ResumeBase):
+    id: int
+    upload_date: datetime
+    parsed_skills: List[str]
+    processing_status: str
+
     class Config:
         from_attributes = True
 
-
-class SkillBase(BaseModel):
-    """Individual skill representation."""
-    name: str
-    confidence: Optional[float] = None
-
-
-class JobPostingCreate(BaseModel):
-    """Schema for creating a new job posting."""
-    title: str = Field(..., min_length=5, max_length=500)
-    company: str = Field(..., min_length=2, max_length=255)
-    location: str = Field(..., max_length=255)
-    description: str = Field(..., min_length=50)
-    requirements: Optional[str] = None
-    required_skills: List[str] = Field(default_factory=list)
-
-
-class JobPostingResponse(BaseModel):
-    """Job posting response schema."""
-    id: int
+# Job Schemas
+class JobPostingBase(BaseModel):
     title: str
     company: str
-    location: str
+    location: Optional[str] = None
     description: str
-    required_skills: List[str]
+    requirements: Optional[str] = None
+    required_skills: List[str] = []
+
+class JobPostingCreate(JobPostingBase):
+    pass
+
+class JobPostingResponse(JobPostingBase):
+    id: int
     created_date: datetime
     is_active: bool
-    
+
     class Config:
         from_attributes = True
 
-
+# Match Schemas
 class MatchResponse(BaseModel):
-    """Individual match result."""
-    id: int
     job_id: int
     job_title: str
     company: str
-    location: str
+    location: Optional[str] = None
     overall_score: float
     semantic_similarity: float
     skill_match_score: float
     matching_skills: List[str]
     missing_skills: List[str]
     explanation: str
-    matched_at: datetime
-    
-    class Config:
-        from_attributes = True
-
 
 class MatchListResponse(BaseModel):
-    """List of matches for a resume."""
     resume_id: int
     resume_filename: str
     total_matches: int
     matches: List[MatchResponse]
 
-
+# Generic
 class ErrorResponse(BaseModel):
-    """Standard error response."""
     error: str
     detail: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.now)

@@ -1,32 +1,21 @@
-"""
-Configuration management using Pydantic Settings.
-Loads environment variables and provides type-safe config access.
-"""
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-
+import os
 
 class Settings(BaseSettings):
-    """Application settings loaded from environment variables."""
+    app_name: str = "AI Resume-Job Matcher"
+    database_url: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/resume_matcher")
+    jwt_secret: str = os.getenv("JWT_SECRET", "super-secret-key-change-it")
+    access_token_expire_minutes: int = 60 * 24  # 24 hours
     
-    # Database
-    database_url: str = "postgresql://postgres:password@localhost:5432/resume_matcher"
-    
-    # File Upload
+    upload_dir: str = "uploads"
     max_file_size_mb: int = 5
-    upload_dir: str = "./uploads"
-    allowed_extensions: set = {".pdf"}
     
-    # AI Model
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
-    similarity_threshold: float = 0.3  # Minimum score to consider a match
     
     class Config:
         env_file = ".env"
-        case_sensitive = False
-
 
 @lru_cache()
-def get_settings() -> Settings:
-    """Cached settings instance to avoid repeated file reads."""
+def get_settings():
     return Settings()
