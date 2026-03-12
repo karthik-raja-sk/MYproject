@@ -1,61 +1,96 @@
 @echo off
-TITLE AI Resume-Job Matcher - Master Controller
 setlocal enabledelayedexpansion
 
-echo ===================================================
-echo 🚀 AI Resume-Job Matcher - Startup
-echo ===================================================
+:: ==========================================
+:: AI Resume-Job Matcher - Automation Script
+:: ==========================================
 
-:: 1. Database Check
-echo [1/3] Checking PostgreSQL service...
-net start postgresql-x64-16 >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    net start postgresql >nul 2>&1
-    if !ERRORLEVEL! NEQ 0 (
-        echo [!] PostgreSQL service not found or failing to start.
-        echo [!] Please ensure PostgreSQL is installed and service name is correct.
-    ) else (
-        echo [+] PostgreSQL started successfully.
-    )
+echo [1/4] Checking System Requirements...
+
+:: --- Python Detection ---
+set "PYTHON_CMD="
+python --version >nul 2>&1
+if !ERRORLEVEL! EQU 0 (
+    set "PYTHON_CMD=python"
 ) else (
-    echo [+] PostgreSQL started.
+    python3 --version >nul 2>&1
+    if !ERRORLEVEL! EQU 0 (
+        set "PYTHON_CMD=python3"
+    ) else (
+        py --version >nul 2>&1
+        if !ERRORLEVEL! EQU 0 (
+            set "PYTHON_CMD=py"
+        )
+    )
 )
 
-:: 2. Start Backend
-echo.
-echo [2/3] Starting Backend Server...
-if not exist backend\venv (
-    echo [!] Backend virtual environment missing. Please run setup_project.bat first.
+if not defined PYTHON_CMD (
+    echo [ERROR] Python not found! Please install Python and add it to your PATH.
     pause
-    exit /b
+    exit /b 1
+)
+echo [INFO] Using Python: !PYTHON_CMD!
+
+:: --- npm Detection ---
+set "NPM_CMD="
+npm --version >nul 2>&1
+if !ERRORLEVEL! EQU 0 (
+    set "NPM_CMD=npm"
 )
 
-:: Launch Backend in separate window
-start "Backend - FastAPI" cmd /k "title Backend - FastAPI && cd backend && call venv\Scripts\activate && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
-
-:: 3. Start Frontend
-echo.
-echo [3/3] Starting Frontend Server...
-if not exist frontend\node_modules (
-    echo [!] Frontend dependencies missing. Please run setup_project.bat first.
+if not defined NPM_CMD (
+    echo [ERROR] Node.js/npm not found! Please install Node.js and add it to your PATH.
     pause
-    exit /b
+    exit /b 1
 )
+echo [INFO] Using npm: !NPM_CMD!
 
-:: Launch Frontend in separate window
-start "Frontend - Vite" cmd /k "title Frontend - Vite && cd frontend && npm run dev"
+:: --- Setup Backend ---
+echo [2/4] Setting up Backend...
+pushd "%~dp0backend"
+if not exist venv (
+    echo [INFO] Creating virtual environment...
+    "!PYTHON_CMD!" -m venv venv
+)
+echo [INFO] Installing backend dependencies...
+call venv\Scripts\activate
+"!PYTHON_CMD!" -m pip install --upgrade pip
+"!PYTHON_CMD!" -m pip install -r requirements.txt
+popd
 
-:: 4. Final Summary
+:: --- Setup Frontend ---
+echo [3/4] Setting up Frontend...
+pushd "%~dp0frontend"
+if not exist node_modules (
+    echo [INFO] Installing frontend dependencies...
+    call "!NPM_CMD!" install
+)
+popd
+
+:: --- Start Project ---
+echo [4/4] Starting Project...
+
+:: Start Backend in a new window
+echo [INFO] Starting Backend Server...
+start "Backend - FastAPI" cmd /k "cd /d %~dp0backend && venv\Scripts\activate && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
+
+:: Start Frontend in a new window
+echo [INFO] Starting Frontend Server...
+start "Frontend - Vite" cmd /k "cd /d %~dp0frontend && npm run dev"
+
+:: Wait for servers to initialize
+echo [INFO] Waiting for servers to start...
+timeout /t 5 /nobreak >nul
+
+:: Open Browser
+echo [INFO] Opening Browser...
+start "" "http://localhost:5173"
+
 echo.
-echo ===================================================
-echo ✅ Application is running!
-echo ===================================================
+echo =========================================
+echo PROJECT IS RUNNING!
+echo Backend: http://127.0.0.1:8000
+echo Frontend: http://localhost:5173
+echo =========================================
 echo.
-echo Backend:   http://localhost:8000
-echo API Docs:  http://localhost:8000/docs
-echo Frontend:  http://localhost:5173
-echo.
-echo 💡 Use 'stop_project.bat' (if available) or close the windows to stop.
-echo 💡 troubleshooting_guide.md is available for common issues.
-echo ===================================================
 pause

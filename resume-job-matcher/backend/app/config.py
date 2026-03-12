@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
+from typing import List
 import os
 
 class Settings(BaseSettings):
@@ -13,8 +14,16 @@ class Settings(BaseSettings):
     
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
     
-    class Config:
-        env_file = ".env"
+    # New fields to fix validation errors from .env
+    allowed_extensions: List[str] = ["pdf", "docx", "txt"]
+    similarity_threshold: float = 0.3
+    
+    # Pydantic v2 configuration
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",
+        protected_namespaces=("settings_",)
+    )
 
 @lru_cache()
 def get_settings():
